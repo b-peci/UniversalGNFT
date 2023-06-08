@@ -8,11 +8,6 @@ import "./GNFTBasicToken.sol";
 /// @notice This smart contract is the main functionality for creating NFT-s and re-using them throughout
 /// different games that use this contract
 
-/**
- * Make it so every 30 days new tokens get relased
- * Prices are determined by bidding wars
- *
- */
 contract Token is ERC721("GameNFT", "G-NFT") {
     event TokenSwaped(address from, address to);
 
@@ -32,10 +27,9 @@ contract Token is ERC721("GameNFT", "G-NFT") {
 
     struct TokenData {
         string tokenUri;
-        uint256 tokenLevel;
+        string tokenFunctionality;
         bool isLocked;
         TokenCreationRequirements requirements;
-        uint256 tokenPrice;
         bool canBeSwaped;
         uint256[] lockedTokenIds;
     }
@@ -43,6 +37,7 @@ contract Token is ERC721("GameNFT", "G-NFT") {
     uint256 s_tokenCounter;
     BasicGNFT BasicGNFTContract;
     mapping(address => uint256[]) addressTokens;
+    mapping(string => uint256[]) gameTokens;
 
     constructor(address tokenCreationContract) {
         BasicGNFTContract = BasicGNFT(tokenCreationContract);
@@ -114,14 +109,6 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         _;
     }
 
-    modifier checkPriceRequirement(uint256 tokenId) {
-        require(
-            GNFTData[tokenId].tokenPrice == msg.value,
-            "You must pay the full price for the selected NFT"
-        );
-        _;
-    }
-
     modifier canTokenBeSwaped(uint256 tokenId) {
         require(GNFTData[tokenId].canBeSwaped, "Token cannot be swaped");
         require(!GNFTData[tokenId].isLocked, "Token is locked, cannot swap");
@@ -129,17 +116,16 @@ contract Token is ERC721("GameNFT", "G-NFT") {
     }
 
     // Data modification functionality
-
     function createGameNFT(
         string memory _tokenURI,
-        uint256 _tokenPrice,
-        TokenCreationRequirements memory _tokenReq
+        TokenCreationRequirements memory _tokenReq,
+        string memory _tokenFunctionality
     ) public returns (uint256) {
         uint256 nftTokenId = s_tokenCounter;
         _safeMint(msg.sender, nftTokenId);
-        GNFTData[nftTokenId].tokenPrice = _tokenPrice;
         GNFTData[nftTokenId].requirements = _tokenReq;
         GNFTData[nftTokenId].canBeSwaped = true;
+        GNFTData[nftTokenId].tokenFunctionality = _tokenFunctionality;
         setTokenURI(_tokenURI, nftTokenId);
         s_tokenCounter = s_tokenCounter + 1;
         addressTokens[msg.sender].push(nftTokenId);
@@ -156,7 +142,6 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         satisfiesWaterRequirements(basicTokenIds, tokenToSwapForId)
         satisfiesEarthRequirements(basicTokenIds, tokenToSwapForId)
         satisfiesWindRequirements(basicTokenIds, tokenToSwapForId)
-        checkPriceRequirement(tokenToSwapForId)
         canTokenBeSwaped(tokenToSwapForId)
     {
         BasicGNFTContract.lockTokens(basicTokenIds, msg.sender);
@@ -187,16 +172,12 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         GNFTData[tokenId].canBeSwaped = true;
     }
 
-    function setTokenURI(string memory _tokenURI, uint256 tokenId)
-        public
-        isOwner(tokenId)
-    {
+    function setTokenURI(
+        string memory _tokenURI,
+        uint256 tokenId
+    ) public isOwner(tokenId) {
         _requireMinted(tokenId);
         GNFTData[tokenId].tokenUri = _tokenURI;
-    }
-
-    function updateToken(uint256 tokenId) public {
-        GNFTData[tokenId].tokenLevel = GNFTData[tokenId].tokenLevel + 1;
     }
 
     function getTokenCounter() public view returns (uint256) {
@@ -211,11 +192,9 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         return GNFTData[tokenId].isLocked;
     }
 
-    function getTokenData(uint256 tokenId)
-        public
-        view
-        returns (TokenData memory)
-    {
+    function getTokenData(
+        uint256 tokenId
+    ) public view returns (TokenData memory) {
         return GNFTData[tokenId];
     }
 
@@ -255,11 +234,9 @@ contract Token is ERC721("GameNFT", "G-NFT") {
             windTokenCount == GNFTData[tokenToSwapForId].requirements.WindReq;
     }
 
-    function getFireTokenIds(uint256[] memory basicTokenIds)
-        private
-        view
-        returns (uint256 fireTokenCount)
-    {
+    function getFireTokenIds(
+        uint256[] memory basicTokenIds
+    ) private view returns (uint256 fireTokenCount) {
         for (uint i = 0; i < basicTokenIds.length; i++) {
             if (BasicGNFTContract.isTokenFireType(basicTokenIds[i])) {
                 fireTokenCount++;
@@ -267,11 +244,9 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         }
     }
 
-    function getWaterTokenIds(uint256[] memory basicTokenIds)
-        private
-        view
-        returns (uint256 tokenCount)
-    {
+    function getWaterTokenIds(
+        uint256[] memory basicTokenIds
+    ) private view returns (uint256 tokenCount) {
         for (uint i = 0; i < basicTokenIds.length; i++) {
             if (BasicGNFTContract.isTokenWaterType(basicTokenIds[i])) {
                 tokenCount++;
@@ -279,11 +254,9 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         }
     }
 
-    function getEarthTokenIds(uint256[] memory basicTokenIds)
-        private
-        view
-        returns (uint256 tokenCount)
-    {
+    function getEarthTokenIds(
+        uint256[] memory basicTokenIds
+    ) private view returns (uint256 tokenCount) {
         for (uint i = 0; i < basicTokenIds.length; i++) {
             if (BasicGNFTContract.isTokenEarthType(basicTokenIds[i])) {
                 tokenCount++;
@@ -291,11 +264,9 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         }
     }
 
-    function getWindTokenIds(uint256[] memory basicTokenIds)
-        private
-        view
-        returns (uint256 tokenCount)
-    {
+    function getWindTokenIds(
+        uint256[] memory basicTokenIds
+    ) private view returns (uint256 tokenCount) {
         for (uint i = 0; i < basicTokenIds.length; i++) {
             if (BasicGNFTContract.isTokenWindType(basicTokenIds[i])) {
                 tokenCount++;

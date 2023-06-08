@@ -1,19 +1,24 @@
 import { ethers, network } from "hardhat";
 import fs from "fs";
+import "dotenv/config";
 
 const exportProperties = async (contractAddresses: string[]) => {
   await exportAbis(contractAddresses);
   await exportAddresses(contractAddresses);
 };
+const TOKEN_ADDRESS = "/home/bekim/Documents/Project/Apps/Web3/GNFT_GeneralPage/src/constants/Token/TokenAddress.json";
+const GNFT_ADDRESS = "/home/bekim/Documents/Project/Apps/Web3/GNFT_GeneralPage/src/constants/BasicGNFT/BasicGNFTAddress.json";
+const TOKEN_ABI = "/home/bekim/Documents/Project/Apps/Web3/GNFT_GeneralPage/src/constants/Token/TokenABI.json";
+const GNFT_ABI = "/home/bekim/Documents/Project/Apps/Web3/GNFT_GeneralPage/src/constants/BasicGNFT/BasicGNFTABI.json";
 
 const Contracts = ["Token", "BasicGNFT"];
 const FrontEndAddressPaths = [
-  "/home/bekim/Documents/Project/Apps/GNFT/gaming-nft/constants/Token/TokenAddress.json",
-  "/home/bekim/Documents/Project/Apps/GNFT/gaming-nft/constants/BasicGNFT/BasicGNFTAddress.json",
+  TOKEN_ADDRESS,
+  GNFT_ADDRESS,
 ];
 const FrontEndAbiPaths = [
-  "/home/bekim/Documents/Project/Apps/GNFT/gaming-nft/constants/Token/TokenABI.json",
-  "/home/bekim/Documents/Project/Apps/GNFT/gaming-nft/constants/BasicGNFT/BasicGNFTABI.json",
+  TOKEN_ABI,
+  GNFT_ABI,
 ];
 const exportAbis = async (contractAddresses: string[]) => {
   for (let i = 0; i < Contracts.length; i++) {
@@ -21,6 +26,7 @@ const exportAbis = async (contractAddresses: string[]) => {
       Contracts[i],
       contractAddresses[i]
     );
+    console.log(contract.interface.format(ethers.utils.FormatTypes.json));
     fs.writeFileSync(
       FrontEndAbiPaths[i],
       contract.interface.format(ethers.utils.FormatTypes.json).toString()

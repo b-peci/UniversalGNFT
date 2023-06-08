@@ -1,5 +1,7 @@
 import { ethers } from "hardhat";
 import exportProperties from "./AddAbiAndAddressToFrontEnd";
+import "dotenv/config";
+
 const main = async () => {
   const BasicGNFT = await ethers.getContractFactory("BasicGNFT");
   const basicToken = await BasicGNFT.deploy();
