@@ -70,7 +70,7 @@ contract BasicGNFT is ERC721("BasicGNFT", "BGNFT") {
     // tokens being locked belong to the msg.sender, and the disassembleToken function
     // checkes whether the msg.sender is the owner hence why we are not checking
     // is owner here
-    function unlockTokens(uint256[] memory tokenIds) external {
+    function unlockTokens(uint256[] memory tokenIds)  external {
         for (uint i = 0; i < tokenIds.length; i++) {
             if (msg.sender != tokenContractAddress)
                 revert BasicGNFT_OnlyTokenContractCanCall();

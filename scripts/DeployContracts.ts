@@ -13,7 +13,12 @@ const main = async () => {
   );
   await tokenContractDeployment.deployed();
   console.log("Token deployed at " + tokenContractDeployment.address);
-  exportProperties([tokenContractDeployment.address, basicToken.address]);
+  await basicToken.setTokenContractAddress(tokenContractDeployment.address);
+  const gameContract = await ethers.getContractFactory("Games");
+  const gameContractDeployed = await gameContract.deploy();
+  await gameContractDeployed.deployed();
+    console.log([tokenContractDeployment.address, basicToken.address, gameContractDeployed.address])
+  exportProperties([tokenContractDeployment.address, basicToken.address, gameContractDeployed.address]);
 };
 
 main().catch((error) => {

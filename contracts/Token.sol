@@ -10,7 +10,7 @@ import "./GNFTBasicToken.sol";
 
 contract Token is ERC721("GameNFT", "G-NFT") {
     event TokenSwaped(address from, address to);
-
+    event TokenCreated(uint256 tokenId);
     enum TokenType {
         Fire,
         Water,
@@ -26,6 +26,7 @@ contract Token is ERC721("GameNFT", "G-NFT") {
     }
 
     struct TokenData {
+        uint256 tokenId;
         string tokenUri;
         string tokenFunctionality;
         bool isLocked;
@@ -37,7 +38,6 @@ contract Token is ERC721("GameNFT", "G-NFT") {
     uint256 s_tokenCounter;
     BasicGNFT BasicGNFTContract;
     mapping(address => uint256[]) addressTokens;
-    mapping(string => uint256[]) gameTokens;
 
     constructor(address tokenCreationContract) {
         BasicGNFTContract = BasicGNFT(tokenCreationContract);
@@ -120,16 +120,17 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         string memory _tokenURI,
         TokenCreationRequirements memory _tokenReq,
         string memory _tokenFunctionality
-    ) public returns (uint256) {
+    ) public {
         uint256 nftTokenId = s_tokenCounter;
         _safeMint(msg.sender, nftTokenId);
         GNFTData[nftTokenId].requirements = _tokenReq;
         GNFTData[nftTokenId].canBeSwaped = true;
         GNFTData[nftTokenId].tokenFunctionality = _tokenFunctionality;
         setTokenURI(_tokenURI, nftTokenId);
+        GNFTData[nftTokenId].tokenId = nftTokenId;
         s_tokenCounter = s_tokenCounter + 1;
         addressTokens[msg.sender].push(nftTokenId);
-        return nftTokenId;
+        emit TokenCreated(nftTokenId);
     }
 
     function swapTokens(
@@ -137,7 +138,6 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         uint256 tokenToSwapForId
     )
         public
-        payable
         satisfiesFireRequirements(basicTokenIds, tokenToSwapForId)
         satisfiesWaterRequirements(basicTokenIds, tokenToSwapForId)
         satisfiesEarthRequirements(basicTokenIds, tokenToSwapForId)
@@ -152,10 +152,22 @@ contract Token is ERC721("GameNFT", "G-NFT") {
             ""
         );
         GNFTData[tokenToSwapForId].lockedTokenIds = basicTokenIds;
+        addressTokens[msg.sender].push(tokenToSwapForId);
+        removeTokenFromAddress(msg.sender, tokenToSwapForId);
+    }
+
+    function removeTokenFromAddress(address currentOwner, uint256 tokenId) private{
+        for(uint256 i = 0; i < addressTokens[msg.sender].length; i++) {
+            if(addressTokens[currentOwner][i] == tokenId) {
+                delete addressTokens[msg.sender][i];
+                break;
+            }
+        }
     }
 
     function disassembleToken(uint256 tokenId) public isOwner(tokenId) {
         _burn(tokenId);
+        removeTokenFromAddress(msg.sender, tokenId);
         BasicGNFTContract.unlockTokens(GNFTData[tokenId].lockedTokenIds);
     }
 

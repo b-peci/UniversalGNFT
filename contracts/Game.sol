@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.7;
 
 contract Games {
@@ -33,13 +35,12 @@ contract Games {
     }
 
     function createGame(
-        string memory _name,
-        address payable _owner
+        string memory _name
     ) external _isGameNameTaken(_name) {
         uint256[] memory _tokens;
         Game memory newGame = Game({
             name: _name,
-            owner: _owner,
+            owner: payable(msg.sender),
             tokens: _tokens
         });
         GameStorage[_name] = newGame;
