@@ -165,10 +165,11 @@ contract Token is ERC721("GameNFT", "G-NFT") {
             }
         }
     }
-
+    // Burning is probably wrong here or at least not needed
     function disassembleToken(uint256 tokenId) public isOwner(tokenId) {
-        _burn(tokenId);
         removeTokenFromAddress(msg.sender, tokenId);
+        unlockToken(tokenId);
+        _burn(tokenId);
         BasicGNFTContract.unlockTokens(GNFTData[tokenId].lockedTokenIds);
     }
 
