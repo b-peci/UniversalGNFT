@@ -24,7 +24,7 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         uint256 EarthReq;
         uint256 WindReq;
     }
-    // ! Having both canBeSwapped and isLocked might be redundant 
+
     struct TokenData {
         uint256 tokenId;
         string tokenUri;
@@ -153,10 +153,9 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         );
         GNFTData[tokenToSwapForId].lockedTokenIds = basicTokenIds;
         addressTokens[msg.sender].push(tokenToSwapForId);
-        lockToken(tokenToSwapForId);
+        removeTokenFromAddress(msg.sender, tokenToSwapForId);
     }
 
-    //May not be needed anymore
     function removeTokenFromAddress(address currentOwner, uint256 tokenId) private{
         for(uint256 i = 0; i < addressTokens[msg.sender].length; i++) {
             if(addressTokens[currentOwner][i] == tokenId) {
@@ -172,6 +171,8 @@ contract Token is ERC721("GameNFT", "G-NFT") {
         BasicGNFTContract.unlockTokens(GNFTData[tokenId].lockedTokenIds);
     }
 
+    // should be modified to show where it is locked, in which valut
+    // each game is going to have it's own unique valut
     function lockToken(uint256 tokenId) public isOwner(tokenId) {
         GNFTData[tokenId].canBeSwaped = false;
         GNFTData[tokenId].isLocked = true;
