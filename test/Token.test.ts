@@ -66,12 +66,12 @@ describe('Token', () => {
     })
     describe('Token Contract', () => { 
         it("Should be able to create complex token", async () => {
-            await tokenContract.createGameNFT("123", "123", {
+            await tokenContract.createGameNFT("123", {
                 FireReq: "1",
                 WaterReq: "0",
                 EarthReq: "0",
                 WindReq: "0"
-            });
+            }, "123");
             const tokenCounter = await tokenContract.getTokenCounter();
             assert.strictEqual(tokenCounter.toString(), "1");
           })
@@ -79,58 +79,45 @@ describe('Token', () => {
    })
   describe('Swapping', () => { 
     beforeEach(async () => {
-        await tokenContract.createGameNFT("123", "123", {
+        await tokenContract.createGameNFT("123",  {
             FireReq: "1",
             WaterReq: "0",
             EarthReq: "0",
             WindReq: "0"
-        });
+        }, "123");
       await basicGNFTContract.connect(accounts[1]).createToken("0","123");
     })
     it("Should be able to swap BasicGNFT tokens to complex Token", async () => {
         const ownerOfComplexToken= await tokenContract.ownerOf("0");
-        await tokenContract.connect(accounts[1]).swapTokens(["0"], "0", {
-            value: "123"
-        });
+        await tokenContract.connect(accounts[1]).swapTokens(["0"], "0");
         const newOwnerOfComplexToken = await tokenContract.ownerOf("0");
         assert.notEqual(ownerOfComplexToken, newOwnerOfComplexToken);
     });
     it("Should not swap if BasicGNFT requirements for a token are not met", async () => {
         await basicGNFTContract.connect(accounts[1]).createToken("1","123");
-        await expect(tokenContract.connect(accounts[1]).swapTokens(["1"], "0", {
-            value: "123"
-        })).to.be.revertedWith("Fire requirements not met"); 
+        await expect(tokenContract.connect(accounts[1]).swapTokens(["1"], "0")).to.be.revertedWith("Fire requirements not met"); 
     })
-    it("Should not swap if enough eth isn't being sent", async () => {
-        await expect(tokenContract.connect(accounts[1]).swapTokens(["0"], "0", {
-            value: "12"
-        })).to.be.revertedWith("You must pay the full price for the selected NFT"); 
-    })
+    // now outdated, since we dont send Eth when swapping anymore
+    // it("Should not swap if enough eth isn't being sent", async () => {
+    //     await expect(tokenContract.connect(accounts[1]).swapTokens(["0"], "0")).to.be.revertedWith("You must pay the full price for the selected NFT"); 
+    // })
     it("Should lock tokens when swapping", async () => {
-        await tokenContract.connect(accounts[1]).swapTokens(["0"], "0", {
-            value: "123"
-        });
+        await tokenContract.connect(accounts[1]).swapTokens(["0"], "0");
         const isTokenLocked = await basicGNFTContract.connect(accounts[1]).isTokenLocked("0");
         assert(isTokenLocked);
     })
     it("Cannot use a locked token for swapping", async () => {
-      await tokenContract.connect(accounts[1]).swapTokens(["0"], "0", {
-            value: "123"
-        });
-        await tokenContract.createGameNFT("123", "123", {
+      await tokenContract.connect(accounts[1]).swapTokens(["0"], "0");
+        await tokenContract.createGameNFT("123", {
           FireReq: "1",
           WaterReq: "0",
           EarthReq: "0",
           WindReq: "0"
-      });
-      await expect(tokenContract.connect(accounts[1]).swapTokens(["0"], "0", {
-        value: "123"
-    })).to.be.revertedWithCustomError(basicGNFTContract, "BasicGNFT__AlreadyLocked")
+      }, "123");
+      await expect(tokenContract.connect(accounts[1]).swapTokens(["0"], "1")).to.be.revertedWithCustomError(basicGNFTContract, "BasicGNFT__AlreadyLocked")
     })
     it("Should unlock BasicGNFT after disassembling a complex token", async () => {
-      await tokenContract.connect(accounts[1]).swapTokens(["0"], "0", {
-        value: "123"
-    });
+      await tokenContract.connect(accounts[1]).swapTokens(["0"], "0");
       const isTokenLocked = await basicGNFTContract.isTokenLocked("0");
       await tokenContract.connect(accounts[1]).disassembleToken("0");
       const isTokenLockedAfterDisassebling = await basicGNFTContract.isTokenLocked("0");
